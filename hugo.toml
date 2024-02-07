@@ -10,7 +10,7 @@ enableRobotsTXT = true
 
 [params]
   footer = "Xinyi Wang"
-  description = "There is more to come!"
+  description = "Hello and welcome to my portfolio!"
   avatarURL = "/images/uci_1.jpg"
   AvatarAltText = "avatar"
   avatarSize = "size-m"
@@ -52,9 +52,9 @@ enableRobotsTXT = true
     weight = 1
 
   [[menu.main]]
-    name = "Posts"
+    name = "Experience"
     pre = "<span data-feather='book'></span>"
-    url = "/posts/"
+    url = "/experience/"
     weight = 2
 
   [[menu.main]]
@@ -64,9 +64,9 @@ enableRobotsTXT = true
     weight = 3
 
   [[menu.main]]
-    name = "Tags"
-    pre = "<span data-feather='tag'></span>"
-    url = "/tags/"
+    name = "Posts"
+    pre = "<span data-feather='coffee'></span>"
+    url = "/posts/"
     weight = 4
 
   [[menu.main]]
