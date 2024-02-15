@@ -5,7 +5,7 @@ type: page
 
 ## Hello my projects are
 
-1. [**Platfrom Migration to AWS - Internship at Amazon**](/projects/amazonintern/)  06/2023 - 09/2023             
+1. [**Platfrom Migration to AWS - Internship at Amazon**](/projects/amazonintern)  06/2023 - 09/2023             
 
 2. [**StayBooking - An online stay rental application**](/projects/staybooking)    01/2022 - 03/2022
 3. [**PapyrusAI - An tool for use in higher education courses**](/projects/papyrusai) 01/2024 - current

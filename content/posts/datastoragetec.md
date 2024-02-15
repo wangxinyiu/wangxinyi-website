@@ -1,0 +1,162 @@
+---
+title: 'Data Storage Tec'
+date: 2024-02-14T11:22:06-08:00
+type: post
+---
+
+| Technology | Advantages | Disadvantages | Use Cases |
+|  ----  | ----  | ---- | ---- | ---- |
+| SQL Databases (e.g., MySQL, PostgreSQL)  | Structured data, [**ACID transactions**](#acid-transactions), Complex queries | [Limited scalability, Schema rigidity](#ls-sr) | Transactional data, Traditional applications (如金融服务)|
+| [**NoSQL Databases**](#1) (e.g., MongoDB, Cassandra)  | Scalability, Flexible schema, High performance for unstructured data | [Less support for ACID transactions, Complexity in data consistency](#2) | Big Data applications, Content Management, Real-time analytics |
+| In-Memory Data Stores (e.g., [**Redis**](#3)) | High performance, Data volatility, Supports complex data types | Data size limited by memory, Persistence complexity | Caching, Session storage, Real-time analytics |
+| Search Engines (e.g., [**Elasticsearch**](#4)) | Fast searching capabilities, Scalability, Real-time analysis | Complex setup and management, Resource-intensive | Full-text search, Log and event data analysis, Real-time analytics |
+| Time Series Databases (e.g., InfluxDB) | Optimized for time-stamped data, Efficient data compression, Real-time analysis | Specialized use case, Learning curve | IoT applications, Time-stamped event tracking |
+| Graph Databases (e.g., Neo4j) | Efficient for relationship-heavy queries, Flexible schema, Directly stores interconnected data | Complex queries can be resource-intensive, Learning curve | Social networks, Recommendation engines, Fraud detection |
+
+◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾◾
+- [SQL Database在分布式是怎么保证ACID的呢?](#sql-database在分布式是怎么保证acid的呢)
+  - [CAP定理](#cap定理)
+- [存放 log - ElasticSearch VS MangoDB](#存放-log---elasticsearch-vs-mangodb)
+- [Hadoop 与 Redis结合的例子](#hadoop-与-redis结合的例子)
+- [Structrce database VS No-structure database{#1}](#structrce-database-vs-no-structure-database1)
+- [What is ACID transaction? {#acid-transactions}](#what-is-acid-transaction-acid-transactions)
+- [Why sql database is limited scalability and schema rigidity? {#ls-sr}](#why-sql-database-is-limited-scalability-and-schema-rigidity-ls-sr)
+- [Why nosql database is Less support for ACID transactions, Complexity in data consistency?{#2}](#why-nosql-database-is-less-support-for-acid-transactions-complexity-in-data-consistency2)
+- [Redis{#3}](#redis3)
+  - [什么是磁盘I/O延迟](#什么是磁盘io延迟)
+- [ElasticSearch{#4}](#elasticsearch4)
+
+## SQL Database在分布式是怎么保证ACID的呢?
+SQL数据库传统上是为单个节点设计的，以支持强一致性和ACID事务特性。在单个数据库服务器上，这些特性相对容易实现，因为所有的数据操作都是在同一个系统上进行，容易保持数据的一致性和同步。
+
+然而，随着大数据和云计算的兴起，分布式SQL数据库变得越来越常见。在分布式环境中，SQL数据库如何保证ACID特性主要依靠以下机制：
+
+- 两阶段提交（2PC）：这是一种常见的分布式事务协议，确保所有涉及的数据库节点要么全部提交事务，要么全部回滚，以此来保证事务的原子性和一致性。
+
+- 分布式锁：在操作数据之前，数据库系统会在所需的资源上获取锁，以此来保证事务的隔离性。
+
+- 同步复制：在数据写入时，将数据同步复制到多个节点，确保每个节点的数据都是最新和一致的。
+
+- 共识算法：如Paxos或Raft，用于在多个节点之间达成一致性，保证数据的一致状态。
+
+这些机制和技术可以有效地在分布式SQL数据库中实现ACID特性，但它们可能会引入额外的复杂性和性能开销。因此，在设计分布式数据库系统时，通常需要在数据一致性、系统可用性和网络分区容忍性之间做出权衡。这也是为什么CAP定理在分布式计算中如此重要，它指出在网络分区发生时，系统不可能同时保证一致性和可用性。
+
+### CAP定理
+CAP定理（Consistency, Availability, Partition tolerance），也称为布鲁尔定理，是分布式计算系统中的一个著名定理，由计算机科学家Eric Brewer提出。CAP定理指出，一个分布式计算系统不可能同时满足以下三点：
+
+1. 一致性（Consistency）：所有节点在同一时间具有相同的数据。
+2. 可用性（Availability）：保证每个请求都会收到一个关于其成功或失败的响应。
+3. 分区容忍性（Partition tolerance）：系统在网络分区发生时，仍能继续运行。      
+
+根据CAP定理，任何分布式系统最多只能同时满足上述三个特性中的两项。例如，如果一个分布式系统必须在网络分区时保持可用性，它可能就无法同时保持完全的一致性。这个定理是分布式数据库设计中的一个关键原则，它影响了包括NoSQL和某些SQL数据库在内的现代数据库系统的设计和运行。
+
+## 存放 log - ElasticSearch VS MangoDB
+Elasticsearch和MongoDB都可以用于存放日志数据，但它们各有优势，适用于不同的使用场景。
+
+Elasticsearch更适合存放日志的原因：
+
+高效的全文搜索能力：Elasticsearch是为搜索优化的，提供了强大的全文搜索功能，非常适合快速检索大量日志数据。
+
+实时分析：Elasticsearch支持近实时的数据索引和搜索，可以快速对新生成的日志数据进行处理和分析。
+
+水平扩展性：Elasticsearch天生支持分布式架构，可以轻松水平扩展，处理PB级别的日志数据。
+
+成熟的日志处理生态：Elasticsearch是ELK（Elasticsearch、Logstash、Kibana）堆栈的一部分，提供了一套完整的日志收集、处理、可视化解决方案。
+
+MongoDB在某些场景下也可以用于存放日志，尤其是当日志数据需要以文档形式存储，且与其他业务数据有较多关联时。MongoDB的文档模型可以方便地存储结构化或半结构化的日志数据，且也支持索引和查询。但是，相比于Elasticsearch，MongoDB在全文搜索和实时分析方面的能力较弱，且在处理大规模日志数据时可能需要更复杂的架构设计来保证性能。
+
+综上所述，对于大多数日志存储和分析的需求，Elasticsearch更加适合，主要是因为其优秀的搜索能力和实时分析性能，以及对大规模数据的良好支持。而MongoDB可能更适合那些日志数据与业务数据紧密相关，需要以文档形式存储和查询的特定场景。
+
+## Hadoop 与 Redis结合的例子
+利用Hadoop进行大规模数据处理和分析，然后将结果存储到Redis中以实现快速访问和查询。这种结合方式特别适合于需要实时数据分析和快速响应的应用。
+
+以下是一个简化的例子，说明如何将Hadoop和Redis结合使用：
+
+**场景描述**        
+假设一个电商公司需要分析其网站的用户行为日志来实时更新用户推荐列表。日志数据量非常大，存储在Hadoop的HDFS中，公司希望使用Hadoop的MapReduce框架来处理这些数据，然后将处理结果（如用户推荐列表）存储到Redis中，以便快速地为在线用户提供个性化推荐。
+
+**实现步骤**
+1. 数据准备：用户行为日志存储在HDFS中，格式可能为CSV或其他结构化格式。
+2. MapReduce处理：
+   - Map阶段：解析日志文件，提取关键信息，如用户ID、浏览的商品、点击事件等。
+   - Reduce阶段：根据用户ID汇总其行为数据，使用某种算法（如协同过滤）计算用户的推荐列表。
+3. 结果存储到Redis：
+   - 处理完毕后，将每个用户的推荐列表存储到Redis中。键（key）可以是用户ID，值（value）是推荐商品的列表。
+   - 可以使用Redis的列表（list）、集合（set）或有序集合（sorted set）数据结构来存储推荐列表，具体取决于需求。
+4. 实时访问：
+   - 当用户访问电商网站时，后端服务会根据用户ID从Redis中查询其推荐列表，并实时展示给用户。
+
+**优势**
+- 高效处理大数据：利用Hadoop的MapReduce框架处理大规模日志数据，有效地进行批量分析。
+- 快速响应：将处理结果存储在Redis中，利用其高速读写特性实现实时数据访问和查询。
+
+## Structrce database VS No-structure database{#1}
+
+**SQL数据库**通常用于存储**结构化数据**。结构化数据指的是那些能够在固定格式下存储的数据，如表格形式，其中定义了明确的数据模型和关系（例如，行和列）。SQL数据库需要预先定义数据模式（Schema），包括数据表和每列的数据类型，适用于需要复杂查询和事务性操作的场景。
+
+**NoSQL数据库**则被设计来处理**非结构化或半结构化数据**。NoSQL数据库提供了灵活的数据模型，支持文档（如MongoDB）、键值对（如Redis）、宽列存储（如Cassandra）和图（如Neo4j）等数据结构，适用于不易在传统关系表格中表示的数据。NoSQL数据库不要求预先定义固定的数据模式，可以存储和管理结构化、半结构化甚至非结构化数据，非常适合快速发展的应用、大规模数据存储和需要高水平扩展性的场景。
+
+## What is ACID transaction? {#acid-transactions}
+ACID是数据库事务正确执行的四个基本要素的缩写，包括原子性（Atomicity）、一致性（Consistency）、隔离性（Isolation）和持久性（Durability）：
+
+- 原子性（Atomicity）：确保事务中的所有操作要么全部完成，要么全部不完成，不会出现中间状态。如果事务中的某个操作失败，整个事务都会回滚，恢复到事务开始前的状态。       
+- 一致性（Consistency）：事务执行的结果必须是数据库从一个一致的状态转变到另一个一致的状态。事务执行过程中不会破坏数据库的完整性和业务规则。       
+- 隔离性（Isolation）：并发执行的事务之间不会互相干扰。每个事务都像在一个隔离的环境中执行一样，对其他事务的操作不可见。       
+- 持久性（Durability）：一旦事务提交，则其所做的修改会永久保存在数据库中，即使发生系统崩溃，修改的数据也不会丢失。
+ACID属性是关系型数据库管理系统（RDBMS）中保证数据完整性和可靠性的关键特性。     
+
+## Why sql database is limited scalability and schema rigidity? {#ls-sr}
+1. 有限的可扩展性：
+   - 垂直扩展限制：SQL数据库传统上依赖于垂直扩展（即增加单个服务器的计算资源）来提升性能，但这种方法成本高昂且有物理限制。
+   - 水平扩展挑战：虽然某些现代SQL数据库支持水平扩展（即增加更多服务器），但实现复杂，尤其是在处理跨多个节点的事务和保持数据一致性时。
+
+2. 模式刚性：
+    - 预定义模式：SQL数据库要求在存储数据之前定义严格的表结构（模式），包括每列的数据类型和大小。这意味着，如果业务需求变化，需要调整数据结构，修改模式可能会很复杂且影响现有数据。
+    - 模式变更成本：模式一旦设定，对其进行变更（如添加或删除字段）可能需要执行昂贵的迁移操作，特别是在大规模数据集上，这可能导致显著的停机时间和复杂性增加。
+
+
+## Why nosql database is Less support for ACID transactions, Complexity in data consistency?{#2}
+
+1. ACID事务的支持较少:
+    
+    主要是因为它们的设计初衷和架构决策。NoSQL数据库为了在分布式系统中提供更高的可扩展性和灵活性，通常会牺牲一部分对严格ACID事务的支持。在分布式环境中，要完全遵守ACID原则很难同时保证高性能和可用性，因为这需要跨多个节点进行严格的数据同步和一致性保证，这在网络分区或延迟的情况下尤其具有挑战性。
+
+    MongoDB为了优化性能和可扩展性，传统上使用了最终一致性模型，并且提供了灵活的文档模型，这些设计选择通常不同于传统关系型数据库的ACID事务模型。不过，从MongoDB 4.0版本开始，它开始支持多文档ACID事务，这标志着MongoDB在保持高性能和灵活性的同时，也能提供关系型数据库中常见的事务特性。
+
+    总的来说，MongoDB等NoSQL数据库通过在一致性、可用性和分区容忍性（根据CAP定理）之间做权衡，为特定的用例和应用场景提供了优化的解决方案。
+
+2. 数据一致性的复杂性：
+
+    - 最终一致性：MongoDB设计为支持最终一致性，而不是传统SQL数据库所支持的即时一致性。这意味着系统会努力保证数据最终会变得一致，但不保证在特定时刻所有的副本都完全一样。
+
+    - 分布式系统的复杂性：在分布式环境中，MongoDB的数据可能会被复制到多个服务器上。网络延迟或故障可能导致数据的复制有所滞后，这就需要额外的机制来处理数据的同步和冲突解决。
+
+    - 写入操作的确认：MongoDB允许开发者在执行写入操作时选择不同级别的写入确认，这可以从不等待确认到等待所有副本都确认。不同的确认级别会影响数据的一致性保证。
+
+    - 分片的数据一致性：为了处理大规模数据，MongoDB支持分片，即把数据分散存储在不同的服务器。在分片的环境中管理数据一致性是更加复杂的，因为需要协调不同分片之间的操作。
+
+    总之，MongoDB这种NoSQL数据库在追求性能、灵活性和可扩展性的同时，相较于传统的关系型数据库，对数据一致性的严格要求有所放宽，这就带来了数据一致性的管理复杂性。
+
+
+## Redis{#3}
+在哪台机器上安装并运行Redis，Redis就会使用这台机器的内存来存储数据。所有通过Redis存储和管理的数据都是直接放在该机器的RAM（随机访问内存）中的。因此，数据的读写操作速度非常快，因为它们是在内存中进行的，避免了磁盘I/O的延迟。
+
+### 什么是磁盘I/O延迟
+磁盘I/O（输入/输出）延迟是指在数据从磁盘读取或向磁盘写入时发生的时间延迟。这种延迟主要由磁盘的物理特性决定，比如磁头寻道时间（查找数据所在的磁道的时间）、旋转延迟（等待数据旋转到磁头下的时间）以及实际的数据传输时间。由于这些操作涉及到机械动作和物理移动，因此磁盘I/O操作通常比内存操作要慢得多。
+
+## ElasticSearch{#4}
+Elasticsearch是一个基于Apache Lucene的开源搜索和分析引擎，它以其高速、可扩展、分布式的特性而广受欢迎。以下是Elasticsearch工作原理的简化概述：
+
+分布式架构：Elasticsearch自然支持分布式处理，能够将数据分散存储在多个节点上，从而提高数据的处理速度和应用的可用性。
+
+倒排索引：Elasticsearch使用倒排索引来实现快速搜索。倒排索引是一种索引结构，它将文档中出现的每个词与包含该词的所有文档列表关联起来。这样，当进行搜索查询时，Elasticsearch可以快速找到包含特定词的所有文档。
+
+文档和索引：在Elasticsearch中，数据被存储为“文档”，而多个文档组成了“索引”。每个文档都是一个可以被索引和搜索的基本信息单元，它们以JSON格式存储，提供了丰富的结构化数据表示。
+
+RESTful API：Elasticsearch提供了简单易用的RESTful API，允许用户执行索引、搜索、更新和删除文档的操作。这些API支持各种语言的客户端与Elasticsearch交互。
+
+实时搜索：Elasticsearch几乎可以实现实时搜索，文档一旦被索引，就可以几乎立即被搜索到。
+
+数据分片和复制：Elasticsearch自动将索引分割为多个“分片”，并且可以在集群中的不同节点上进行复制。这不仅增加了系统的容错能力，也提高了查询处理的并行性，从而提高性能。
+
+通过这些机制，Elasticsearch能够快速处理大规模数据集上的复杂搜索和分析任务。
