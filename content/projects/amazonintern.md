@@ -9,7 +9,10 @@ type: page
 - [Motivation](#motivation)
 - [Result](#result)
 - [High-level Design](#high-level-design)
+- [Challengest](#challengest)
 - [Details](#details)
+  - [decouple的好处](#decouple的好处)
+  - [Step function的好处](#step-function的好处)
   - [Why Stepfunction rather than EC2?](#why-stepfunction-rather-than-ec2)
   - [Why do I plan to use AWS CDK instead of CloudFormation?](#why-do-i-plan-to-use-aws-cdk-instead-of-cloudformation)
   - [How do I make sure the code quality?](#how-do-i-make-sure-the-code-quality)
@@ -56,7 +59,40 @@ The server needs to handle the storgae of data and workflows efficientyly, but c
 # High-level Design
 ![highlevel_design](/images/lowlevel.png)
 
+# Challengest
+1. **situation:** 项目是将一个平台迁移到AWS环境。这个平台原先运行在Amazon的内部系统“Brazil”上，需要进行改造以适应AWS的架构。特别地，这个迁移涉及到使用步骤函数组合Lambda函数来实现。
+
+2. **Task:** 需要将原来的平台解耦成多个lambda函数，但lambda函数最多只能运行15分钟。这个任务确保了因为lambda的时间限制而不会导致迁移失败。如果lambda因为达到15分钟的限制而终止，将会引发数据处理不完整，可能导致数据丢失或工作流程中断。
+
+3. **Action:** 
+   - 将原来逻辑中的重试次数调整为3次。
+   - 将平台细分成多个小单元，并通过多次测试不同场景，确保每个单元能够在5到15分钟内完成。
+   - 为了处理边缘情况，在每个单元运行到14分钟时加入逻辑检测。如果已经运行了14分钟，意味着可能由于某些原因无法继续传输数据。此时，我会将当前产生的数据存储到AWS S3桶中，并回滚工作流程，以防止因超时导致的整体失败。
+
+4. **Result:**
+     成功解决了Lambda函数的时间限制问题，确保了工作流程的顺利执行。这不仅提高了迁移过程的效率，还保障了数据的安全性和完整性。
+
 # Details
+## decouple的好处
+
+  - **增加可维护性**：可以单独维护和更新各个部分，提高了整体系统的可靠性和灵活性。
+  - **增强可靠性**: 单个函数出现问题不会影响整个系统，从而提高了整体应用的稳定性。
+  - **提升灵活性**: 独立的函数可以更快地开发和部署，便于快速响应业务需求的变化。
+  - **优化性能**: 函数可以并行运行，提高系统的响应速度和处理能力。
+  - **降低成本**: 按需使用计算资源，只为实际使用的资源付费，避免了资源的闲置浪费。
+  - **精简测试**: 单个函数更容易进行单元测试和集成测试，提高了代码质量。
+  - **容错和恢复**: 出现故障时，只需要重新部署或修复有问题的部分，而不是整个应用。
+  
+  >lambda的时间控制问题 → 在写unit test的测试过程中，我需要严格的保证每一个lambda的运行时间，lambda的运行时间只能在15分钟内，所以我需要尽可能的在每一个功能单元包含多的但是又不能超过15分钟
+
+## Step function的好处 
+  - **工作流自动化**: 它自动执行工作流中的各个步骤，减少了手动干预的需要。
+  - **可视化管理**: 提供一个直观的界面，让您可以看到工作流的各个步骤和它们的当前状态。
+  - **灵活的集成**: 可以轻松地与其他AWS服务集成，如Lambda、DynamoDB、S3等。
+  - **按使用付费**: 按照工作流的执行次数和状态转换次数付费，无需预先投资。
+
+   > 因为我是通过step function串联了我的lambda，所以lambda之间的参数的传递成为一个难点。因为lambda是可以有input和output的，但只能接受JSON格式。所以这里有一个序列化(Serializtion) 和反序列化(Deserialization)的步骤。
+
 ## Why Stepfunction rather than EC2?
 1. 自动扩展和容错：Step Functions 自动处理扩展和容错，确保工作流的执行即使在高负载下也能保持高可用性。相比之下，使用 EC2 实例通常需要手动设置自动扩展策略和容错机制。
     - 自动缩放：Step Functions 可以根据工作流执行的数量自动缩放，以适应请求量的变化。这意味着在请求量增加时，Step Functions 能够动态地增加资源来处理更多的工作流，并在负载减少时相应地减少资源。
